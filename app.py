@@ -144,7 +144,7 @@ class WarcToZip(object):
 
 def app(environ, start_response):
   if environ["PATH_INFO"]=="/":
-    data = """WARC to ZIP converter.
+    data = """Experimental WARC to ZIP converter.
 
 Usage:
   http://"""+environ["SERVER_NAME"]+"""/<url to warc.gz>
