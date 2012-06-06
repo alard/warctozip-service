@@ -151,7 +151,7 @@ Usage:
 
 Maybe the WARC file is part of a larger file:
   http://"""+environ["SERVER_NAME"]+"""/<byte range>/<url to warc.gz>
-(the server must support HTTP Range requests),
+(the server must support HTTP Range requests)
 
 A ZIP filename can be specified:
   http://"""+environ["SERVER_NAME"]+"""/<zip filename>/<url to warc.gz>
