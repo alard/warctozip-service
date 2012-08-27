@@ -138,7 +138,7 @@ class WarcToZip(object):
   def iter_zip(self):
     with ZipFile(self, "w") as outzip:
       for (offset, record, errors) in self.archive.read_records(limit=None):
-        if record and record.type == WarcRecord.RESPONSE and record.content[0] == ResponseMessage.CONTENT_TYPE:
+        if record and record.type == WarcRecord.RESPONSE and re.sub(r'\s+', '', record.content[0]) == ResponseMessage.CONTENT_TYPE:
           message = ResponseMessage(RequestMessage())
           leftover = message.feed(record.content[1])
           message.close()
