@@ -92,7 +92,7 @@ class WarcToZip(object):
 
     self.path_types = {}
 
-    self.files = []
+    self.files = {}
     self.errors = []
 
     self.offset = 0
@@ -133,7 +133,6 @@ class WarcToZip(object):
 
       path.append(unique_part)
 
-    print (url, "/".join(path))
     return "/".join(path)
 
   def iter_zip(self):
@@ -151,7 +150,7 @@ class WarcToZip(object):
 
           info = ZipInfo(filename, date_time)
           outzip.writestr(info, message.get_body())
-          self.files.append(record.url)
+          self.files[filename] = record.url
 
           for chunk in self.buffer:
             yield(chunk)
@@ -162,7 +161,7 @@ class WarcToZip(object):
           for e in errors:
             self.errors.append(e)
 
-      outzip.writestr("files.txt", "\n".join(self.files))
+      outzip.writestr("files.txt", "\n".join([ "%s -> %s" % (v,k) for k,v in self.files.iteritems() ]))
       if len(self.errors) > 0:
         outzip.writestr("errors.txt", "\n".join(self.errors))
 
