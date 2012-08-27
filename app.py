@@ -90,6 +90,8 @@ class WarcToZip(object):
   def __init__(self, url, bytes_range=None):
     self.archive = WarcRecord.open_archive(file_handle=ResponseAsFile(url, bytes_range))
 
+    self.path_types = {}
+
     self.files = []
     self.errors = []
 
@@ -106,6 +108,34 @@ class WarcToZip(object):
   def flush(self):
     pass
 
+  def url_to_filename(self, url):
+    """ Map url to a unique file name/path. Register the directories in the path. """
+    filename = re.sub(r'^https?://', '', url)
+    filename = os.path.normpath(filename)
+    
+    path = []
+    path_parts = filename.split("/")
+
+    for idx, part in enumerate(path_parts):
+      tries = 0
+      unique_part = part
+      new_path = "/".join(path + [part])
+
+      while new_path in self.path_types and (self.path_types[new_path] == "file" or len(path_parts)-1 == idx):
+        tries += 1
+        unique_part = "%s.%d" % (part, tries)
+        new_path = "/".join(path + [unique_part])
+
+      if len(path_parts)-1 == idx:
+        self.path_types[new_path] = "file"
+      else:
+        self.path_types[new_path] = "dir"
+
+      path.append(unique_part)
+
+    print (url, "/".join(path))
+    return "/".join(path)
+
   def iter_zip(self):
     with ZipFile(self, "w") as outzip:
       for (offset, record, errors) in self.archive.read_records(limit=None):
@@ -114,7 +144,7 @@ class WarcToZip(object):
           leftover = message.feed(record.content[1])
           message.close()
 
-          filename = re.sub(r'^https?://', '', record.url)
+          filename = self.url_to_filename(record.url)
           date_time = record.date
           date_time = (int(date_time[0:4]), int(date_time[5:7]), int(date_time[8:10]),
                        int(date_time[11:13]), int(date_time[14:16]), int(date_time[17:19]))
