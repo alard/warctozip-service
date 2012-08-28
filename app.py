@@ -214,7 +214,8 @@ def app(environ, start_response):
       w = WarcToZip(IterContentAsFile("input.warc.gz", multipart_iter_content(tmp, boundary)))
       start_response("200 OK", [
         ("Content-Type", "application/zip"),
-        ("Content-Disposition", "attachment; filename="+zip_filename)
+        ("Content-Disposition", "attachment; filename="+zip_filename),
+        ("X-Accel-Buffering", "no")
       ])
       return w.iter_zip()
 
@@ -224,7 +225,8 @@ def app(environ, start_response):
       w = WarcToZip(environ["wsgi.input"])
       start_response("200 OK", [
         ("Content-Type", "application/zip"),
-        ("Content-Disposition", "attachment; filename="+zip_filename)
+        ("Content-Disposition", "attachment; filename="+zip_filename),
+        ("X-Accel-Buffering", "no")
       ])
       return w.iter_zip()
 
@@ -306,7 +308,8 @@ Example:
     w = WarcToZip(url, bytes_range)
     start_response("200 OK", [
       ("Content-Type", "application/zip"),
-      ("Content-Disposition", "attachment; filename="+zip_filename)
+      ("Content-Disposition", "attachment; filename="+zip_filename),
+      ("X-Accel-Buffering", "no")
     ])
     return w.iter_zip()
   else:
