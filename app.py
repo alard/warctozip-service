@@ -252,11 +252,16 @@ A ZIP filename can be specified if you don't like the default:
   http://"""+environ["SERVER_NAME"]+"""/&lt;zip filename&gt;/&lt;url to warc.gz&gt;
   http://"""+environ["SERVER_NAME"]+"""/&lt;byte range&gt;/&lt;zip filename&gt;/&lt;url to warc.gz&gt;
 
+To link to WARC records within a larger file, without converting to ZIP:
+  http://"""+environ["SERVER_NAME"]+"""/&lt;byte range&gt;/&lt;warc filename&gt;/&lt;url to warc.gz&gt;
+(the server must support HTTP Range requests)
+
 Examples:
   http://"""+environ["SERVER_NAME"]+"""/https://github.com/downloads/alard/warc-proxy/picplz-00454713-20120603-143400.warc.gz
   http://"""+environ["SERVER_NAME"]+"""/example.zip/https://github.com/downloads/alard/warc-proxy/picplz-00454713-20120603-143400.warc.gz
   http://"""+environ["SERVER_NAME"]+"""/30573088768-30573890406/http://archive.org/download/mobileme-hero-1335023445/mobileme-full-1335023445.tar
   http://"""+environ["SERVER_NAME"]+"""/30573088768-30573890406/homepage.mac.com-jcarias.zip/http://archive.org/download/mobileme-hero-1335023445/mobileme-full-1335023445.tar
+  http://"""+environ["SERVER_NAME"]+"""/30573088768-30573890406/homepage.mac.com-jcarias.warc.gz/http://archive.org/download/mobileme-hero-1335023445/mobileme-full-1335023445.tar
 
 
 <strong>2. Send the data via an HTTP POST request.</strong>
@@ -305,6 +310,22 @@ Example:
     if zip_filename == None:
       zip_filename = re.sub(r"\.warc(\.gz)?$", "", os.path.basename(re.sub(r"\?.*$", "", url))) + ".zip"
 
+    elif re.search(r"\.warc(\.gz)?$", zip_filename):
+      # no zip conversion
+      headers = { }
+      if bytes_range:
+        headers["Range"] = "bytes="+bytes_range
+      response = requests.get(url, headers=headers)
+      iter_content = response.iter_content(chunk_size=4096)
+
+      start_response("200 OK", [
+        ("Content-Type", "application/warc"),
+        ("Content-Disposition", "attachment; filename="+zip_filename),
+        ("X-Accel-Buffering", "no")
+      ])
+      return iter_content
+
+    # streaming warc-to-zip conversion
     w = WarcToZip(url, bytes_range)
     start_response("200 OK", [
       ("Content-Type", "application/zip"),
